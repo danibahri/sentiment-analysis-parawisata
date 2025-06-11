@@ -16,14 +16,41 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Download NLTK data jika belum ada
-import nltk
-try:
-    nltk.download('stopwords', quiet=True)
-    nltk.download('punkt', quiet=True)
-    nltk.download('wordnet', quiet=True)
-    nltk.download('omw-1.4', quiet=True)
-except:
-    pass
+# import nltk
+# try:
+#     nltk.download('stopwords', quiet=True)
+#     nltk.download('punkt', quiet=True)
+#     nltk.download('wordnet', quiet=True)
+#     nltk.download('omw-1.4', quiet=True)
+# except:
+#     pass
+
+def download_nltk_data():
+    import nltk
+    import os
+    
+    try:
+        # First check if data exists
+        nltk.data.find('tokenizers/punkt')
+        nltk.data.find('corpora/stopwords')
+        nltk.data.find('corpora/wordnet')
+        nltk.data.find('corpora/omw-1.4')
+        print("NLTK data already exists.")
+    except LookupError:
+        # If not, download required data
+        print("Downloading NLTK data...")
+        nltk_data_dir = os.path.join(os.path.expanduser('~'), 'nltk_data')
+        os.makedirs(nltk_data_dir, exist_ok=True)
+        
+        # Download with explicit destination path
+        nltk.download('punkt', download_dir=nltk_data_dir)
+        nltk.download('stopwords', download_dir=nltk_data_dir)
+        nltk.download('wordnet', download_dir=nltk_data_dir)
+        nltk.download('omw-1.4', download_dir=nltk_data_dir)
+        print("NLTK data download completed.")
+
+# Call this function early
+download_nltk_data()
 
 # Konfigurasi halaman
 st.set_page_config(
