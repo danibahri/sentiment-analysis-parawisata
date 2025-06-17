@@ -124,17 +124,50 @@ def initialize_models():
     
     # Slang mapping
     slang_mapping = {
-        'gk': 'tidak', 'ga': 'tidak', 'gak': 'tidak', 'ngk': 'tidak', 'tdk': 'tidak', 'g': 'tidak',
-        'gw': 'saya', 'gue': 'saya', 'lu': 'kamu', 'loe': 'kamu', 'elo': 'kamu',
-        'yg': 'yang', 'udh': 'sudah', 'sdh': 'sudah', 'dah': 'sudah',
-        'bs': 'bisa', 'bgt': 'banget', 'bngt': 'banget', 'dgn': 'dengan',
-        'pake': 'pakai', 'utk': 'untuk', 'bwt': 'buat', 'jg': 'juga',
-        'aja': 'saja', 'aj': 'saja', 'blm': 'belum', 'emg': 'memang',
-        'krn': 'karena', 'karna': 'karena', 'tp': 'tapi', 'tpi': 'tapi',
-        'klo': 'kalau', 'kl': 'kalau', 'bsk': 'besok', 'dr': 'dari',
-        'pd': 'pada', 'lg': 'lagi', 'sih': '', 'nih': '', 'ni': '',
-        'deh': '', 'dong': '', 'donk': '', 'lah': '', 'tuh': 'itu',
-        'ngga': 'tidak', 'nggak': 'tidak', 'brp': 'berapa'
+        # Negations
+        'gk': 'tidak', 'ga': 'tidak', 'gak': 'tidak', 'ngk': 'tidak', 'tdk': 'tidak', 
+        'g': 'tidak', 'nggak': 'tidak', 'ngga': 'tidak', 'gag': 'tidak', 'kagak': 'tidak',
+        'ora': 'tidak', 'boro': 'tidak', 'kaga': 'tidak',
+        
+        # Pronouns
+        'gw': 'saya', 'gue': 'saya', 'ane': 'saya', 'ana': 'saya', 'w': 'saya',
+        'lu': 'kamu', 'loe': 'kamu', 'elo': 'kamu', 'lo': 'kamu', 'u': 'kamu',
+        'doi': 'dia', 'dy': 'dia', 'beliau': 'dia',
+        
+        # Common abbreviations
+        'yg': 'yang', 'dg': 'dengan', 'dgn': 'dengan', 'sm': 'sama', 'dr': 'dari',
+        'utk': 'untuk', 'bwt': 'buat', 'krn': 'karena', 'karna': 'karena',
+        'jd': 'jadi', 'tp': 'tapi', 'tpi': 'tapi',
+        
+        # Time expressions
+        'udh': 'sudah', 'sdh': 'sudah', 'dah': 'sudah', 'udah': 'sudah',
+        'blm': 'belum', 'belom': 'belum', 'skrg': 'sekarang', 'ntr': 'nanti',
+        'kmrn': 'kemarin', 'bsk': 'besok',
+        
+        # Adjectives and intensifiers
+        'bgt': 'banget', 'bngt': 'banget', 'bgd': 'banget',
+        'bener': 'benar', 'bnr': 'benar', 'bagus': 'bagus', 'bgs': 'bagus',
+        
+        # Quantities and modifiers
+        'byk': 'banyak', 'bnyk': 'banyak', 'sdikit': 'sedikit', 'smua': 'semua',
+        
+        # Verbs
+        'liat': 'lihat', 'dgr': 'dengar', 'mkn': 'makan', 'jln': 'jalan',
+        'dtg': 'datang', 'plg': 'pulang',
+        
+        # Modal verbs
+        'bs': 'bisa', 'mau': 'mau', 'hrs': 'harus',
+        
+        # Conjunctions and particles
+        'klo': 'kalau', 'jg': 'juga', 'aja': 'saja', 'lg': 'lagi',
+        
+        # Expressions (remove these)
+        'sih': '', 'nih': '', 'deh': '', 'dong': '', 'lah': '', 'kok': '',
+        'tuh': 'itu', 'wkwk': '', 'hehe': '', 'ok': 'oke',
+        
+        # Tourism specific
+        'wisata': 'wisata', 'pantai': 'pantai', 'pulau': 'pulau',
+        'gili': 'gili', 'labak': 'labak', 'madura': 'madura'
     }
     
     # Kata positif dan negatif
@@ -162,65 +195,126 @@ def initialize_models():
 
 # Fungsi preprocessing
 def clean_text(text, progress_callback=None):
-    """Membersihkan teks dari URL, mention, hashtag, dll"""
+    """Enhanced text cleaning with better Indonesian language support"""
     if progress_callback:
         progress_callback("🧹 Membersihkan teks...")
     
-    if isinstance(text, str): 
-        # Remove URLs
-        text = re.sub(r'https?://\S+|www\.\S+', '', text)
-        # Remove mentions (@username)
-        text = re.sub(r'@\w+', '', text)
-        # Remove hashtags (keep the text without #)
-        text = re.sub(r'#(\w+)', r'\1', text)
-        # Remove emojis and special characters
-        text = re.sub(r'[^\w\s]', ' ', text)
-        # Remove numbers
-        text = re.sub(r'\d+', '', text)
-        # Remove extra spaces
-        text = re.sub(r'\s+', ' ', text).strip()
-        # Convert to lowercase
-        text = text.lower()
-        return text
-    else:
+    if not isinstance(text, str) or not text.strip():
         return ""
+    
+    # Convert to string and handle encoding issues
+    text = str(text).strip()
+    
+    # Remove URLs (including variations)
+    text = re.sub(r'https?://[^\s]+|www\.[^\s]+|[^\s]+\.com[^\s]*', '', text)
+    
+    # Remove email addresses
+    text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '', text)
+    
+    # Remove mentions and hashtags (keep text, remove symbols)
+    text = re.sub(r'@\w+', '', text)
+    text = re.sub(r'#(\w+)', r'\1', text)
+    
+    # Remove excessive punctuation and special characters
+    text = re.sub(r'[^\w\s]', ' ', text)
+    
+    # Remove numbers but keep words with numbers
+    text = re.sub(r'\b\d+\b', '', text)
+    
+    # Handle repeated characters (like "bagusssss" -> "bagus")
+    text = re.sub(r'(.)\1{2,}', r'\1\1', text)
+    
+    # Remove excessive whitespace
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Convert to lowercase
+    text = text.lower().strip()
+    
+    # Remove single characters except meaningful ones
+    words = text.split()
+    words = [word for word in words if len(word) > 1 or word in ['a', 'i', 'u']]
+    
+    return ' '.join(words)
 
 def normalize_text(text, stemmer_id, stemmer_en, all_stop_words, slang_mapping, progress_callback=None):
-    """Normalisasi teks dengan stemming dan penghapusan stopwords"""
+    """Enhanced text normalization with comprehensive preprocessing"""
     if progress_callback:
         progress_callback("🔄 Melakukan normalisasi teks...")
     
-    if not isinstance(text, str) or not text:
+    if not isinstance(text, str) or not text.strip():
         return ""
     
+    # Initial cleaning
+    text = text.strip().lower()
+    
+    # Handle contractions
+    text = re.sub(r"n't", " not", text)
+    text = re.sub(r"'re", " are", text)
+    text = re.sub(r"'ve", " have", text)
+    
     # Tokenize
-    tokens = word_tokenize(text)
+    try:
+        tokens = word_tokenize(text)
+    except:
+        tokens = text.split()
     
-    # Normalisasi kata gaul
-    normalized_tokens = [slang_mapping.get(word, word) for word in tokens]
+    # Normalize slang
+    normalized_tokens = []
+    for token in tokens:
+        if token in slang_mapping:
+            replacement = slang_mapping[token]
+            if replacement:  # Only add non-empty replacements
+                normalized_tokens.append(replacement)
+        else:
+            normalized_tokens.append(token)
     
-    # Menghapus stopwords
-    filtered_tokens = [word for word in normalized_tokens if word not in all_stop_words and len(word) > 1]
+    # Enhanced stopwords
+    enhanced_stopwords = all_stop_words.union({
+        'adalah', 'ada', 'akan', 'aku', 'anda', 'atau', 'bagi', 'bahwa',
+        'dalam', 'dari', 'dengan', 'untuk', 'pada', 'oleh', 'sebagai',
+        'itu', 'ini', 'yang', 'dan', 'tapi', 'karena', 'jadi', 'kalau',
+        'orang', 'kita', 'dia', 'saya', 'kamu'
+    })
     
-    # Stemming
+    # Filter tokens
+    filtered_tokens = []
+    for token in normalized_tokens:
+        if (len(token) > 2 and 
+            token not in enhanced_stopwords and
+            not token.isdigit() and
+            token.isalpha()):
+            filtered_tokens.append(token)
+    
+    # Enhanced stemming
     stemmed_tokens = []
     for token in filtered_tokens:
-        if len(token) > 3:
-            # Indonesian stemming
-            stemmed_id = stemmer_id.stem(token)
-            if len(stemmed_id) < len(token) - 1:
-                stemmed_tokens.append(stemmed_id)
-            else:
-                # English stemming
-                stemmed_en = stemmer_en.stem(token)
-                if len(stemmed_en) < len(token) - 1:
-                    stemmed_tokens.append(stemmed_en)
+        try:
+            if len(token) > 3:
+                # Try Indonesian stemming first
+                stemmed_id = stemmer_id.stem(token)
+                if len(stemmed_id) < len(token) - 1 and len(stemmed_id) > 2:
+                    stemmed_tokens.append(stemmed_id)
                 else:
-                    stemmed_tokens.append(token)
-        else:
+                    # Try English stemming
+                    stemmed_en = stemmer_en.stem(token)
+                    if len(stemmed_en) < len(token) - 1 and len(stemmed_en) > 2:
+                        stemmed_tokens.append(stemmed_en)
+                    else:
+                        stemmed_tokens.append(token)
+            else:
+                stemmed_tokens.append(token)
+        except:
             stemmed_tokens.append(token)
     
-    return ' '.join(stemmed_tokens)
+    # Remove duplicates while preserving order
+    final_tokens = []
+    seen = set()
+    for token in stemmed_tokens:
+        if token not in seen and len(token) >= 2:
+            final_tokens.append(token)
+            seen.add(token)
+    
+    return ' '.join(final_tokens).strip()
 
 def analyze_sentiment(text, positive_words, negative_words, progress_callback=None):
     """Analisis sentimen berdasarkan kata positif dan negatif"""

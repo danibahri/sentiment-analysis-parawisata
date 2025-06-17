@@ -33,6 +33,8 @@ streamlit run app.py
 ### 3. Buka Browser
 
 Aplikasi akan terbuka otomatis di `http://localhost:8501`
+atau bisa
+Link Aplikasi `https://sentiment-analysis-parawisata.streamlit.app/`
 
 ## 📖 Cara Penggunaan
 
